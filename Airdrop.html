@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Spartacus Liberty Coin Airdrop pages</title>
+  <style>
+    body {
+      background-image: url('background.jpeg');
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: repeat;
+    }
+    
+    #claimButton {
+      width: 500px;
+      height: 80px;
+      border-radius: 40px;
+      background-color: pink;
+      font-size: 30px;
+      background-image: linear-gradient(to bottom right, pink, lightpink);
+      position: absolute;
+      top: 500px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none; /* 按钮默认为不可点击状态 */
+      opacity: 0.5; /* 按钮透明度为0.5 */
+    }
+  </style>
+</head>
+<body>
+  
+  <button id="claimButton">Claim $SLC Airdrop</button>
+
+  <script src="web3.min.js"></script>
+  <script>
+    window.addEventListener('load', async () => {
+      // Check if MetaMask is installed
+      if (typeof window.ethereum !== 'undefined') {
+        // Connect to MetaMask
+        await window.ethereum.enable();
+        
+        // Create web3 instance
+        const web3 = new Web3(window.ethereum);
+        
+        // Connect to Linea network (ID 250)
+        const networkId = 59144;
+        const chainId = await web3.eth.getChainId();
+        if (chainId !== networkId) {
+          // Load Linea network configuration and switch to Linea network
+          const LineaConfig = {
+            chainId: '0x6b',
+            chainName: 'Linea Mainnet',
+            nativeCurrency: {
+              name: 'ETH',
+              symbol: 'ETH',
+            },
+            rpcUrls: ['https://linea-mainnet.infura.io/v3/'],
+            blockExplorerUrls: ['https://lineascan.build'],
+          };
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [LineaConfig],
+          });
+        }
+        
+        // Get the account address connected to MetaMask
+        const accounts = await web3.eth.getAccounts();
+        const account = accounts[0];
+        
+        // Read the addresses from the airdrop-list.txt file and store them in an array
+        const fileUrl = 'airdrop-list.txt';
+        const response = await fetch(fileUrl);
+        const text = await response.text();
+        const addresses = text.toLowerCase().trim().split('\n');
+        
+        // Check if the MetaMask address matches any address in the array
+        if (addresses.includes(account.toLowerCase().trim())) {
+          // Enable the claim button if there is a match
+          claimButton.style.pointerEvents = 'auto';
+          claimButton.style.opacity = '1';
+        }
+        
+        // Handle claim button click
+        claimButton.addEventListener('click', async () => {
+          // Call the claim function in the smart contract
+          const contractAddress = '0x2554a2AA356233AB9942A7B345D2f92B9988aFd7';
+          const contractABI = [{"inputs":[{"internalType":"contract BEP20","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Claimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"inputs":[],"name":"AMOUNT_PER_ADDRESS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address[]","name":"_addresses","type":"address[]"}],"name":"addAirdropAddresses","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address[]","name":"_addresses","type":"address[]"}],"name":"addOneAirdropAddresses","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"airdropAddresses","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"endTimeUnix","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"hasClaimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_startTimeUnix","type":"uint256"},{"internalType":"uint256","name":"_endTimeUnix","type":"uint256"}],"name":"setAirdropPeriod","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"startTimeUnix","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract BEP20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdrawRemaining","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+          const contract = new web3.eth.Contract(contractABI, contractAddress);
+          
+          try {
+            // Send the claim transaction
+            const transaction = await contract.methods.claim().send({ from: account });
+            console.log(transaction);
+          } catch (error) {
+            console.error(error);
+          }
+        });
+      } else {
+        // MetaMask is not installed, display an error message
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent = 'Please install MetaMask to connect to a wallet.';
+        document.body.appendChild(errorMessage);
+      }
+    });
+  </script>
+</body>
+</html>
